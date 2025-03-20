@@ -29,6 +29,7 @@ try:
         except RPLidarException as e:
             erreur += 1 
             print(f"Erreur lors de la lecture du Lidar : {e}")
+            lidar.stop()
             time.sleep(1)
             lidar.clear_input()  # Nettoyage du tampon en cas d'erreur
             time.sleep(1)
