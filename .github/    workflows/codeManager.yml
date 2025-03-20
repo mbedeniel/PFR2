@@ -1,22 +1,41 @@
-# Workflow name (appears in GitHub Actions UI)
-name: Super-Linter
+name: Python CI Workflow
 
-# This workflow will trigger on every push to the repository
-on: push
+on:
+  push:  # Exécute le workflow à chaque push sur n'importe quelle branche
+  pull_request:  # Exécute aussi lors d'un pull request pour préparer l'environnement
 
 jobs:
-  super-lint:  # Job name
-    name: Lint code base  # Display name in GitHub Actions
-    runs-on: ubuntu-latest  # Use the latest Ubuntu runner provided by GitHub
-
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest  # Exécute sur Ubuntu
     steps:
-      # Step 1: Checkout (clone) the repository to the GitHub Actions runner
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Clone le dépôt GitHub
 
-      # Step 2: Run Super-Linter to check code quality and formatting
       - name: Run Super-Linter
-        uses: github/super-linter@v4
+        uses: github/super-linter@v4  # Linting du code
         env:
-          DEFAULT_BRANCH: main  # Specify the default branch (main)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token for authentication
+          DEFAULT_BRANCH: main  # Branche de référence
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  setup-environment:
+    name: Setup Python Virtual Environment
+    runs-on: ubuntu-latest
+    needs: lint  # Exécute cette étape seulement si le linter passe sans erreur
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4  # Récupération du code
+
+      - name: Install Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'  # Version de Python
+
+      - name: Install Virtual Environment
+        run: python -m venv mon_environnement  # Création de l'environnement virtuel
+
+      - name: Activate Virtual Environment & Install Dependencies
+        run: |
+          source mon_environnement/bin/activate
+          pip install --upgrade pip  # Met à jour pip
+          pip install matplotlib rplidar sklearn opencv-python numpy libcamera  # Installe les bibliothèques
