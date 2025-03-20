@@ -1,0 +1,22 @@
+# Workflow name (appears in GitHub Actions UI)
+name: Super-Linter
+
+# This workflow will trigger on every push to the repository
+on: push
+
+jobs:
+  super-lint:  # Job name
+    name: Lint code base  # Display name in GitHub Actions
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner provided by GitHub
+
+    steps:
+      # Step 1: Checkout (clone) the repository to the GitHub Actions runner
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Step 2: Run Super-Linter to check code quality and formatting
+      - name: Run Super-Linter
+        uses: github/super-linter@v4
+        env:
+          DEFAULT_BRANCH: main  # Specify the default branch (main)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GitHub token for authentication
