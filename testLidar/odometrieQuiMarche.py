@@ -2,7 +2,7 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from rplidar import RPLidar
-from icp import icp  # Utilisation de l'implémentation ICP que tu as fournie
+from icp import icp 
 
 # --- CONFIGURATION LIDAR ---
 PORT_NAME = "/dev/cu.SLAB_USBtoUART"  # ⚠️ Modifier selon le port réel du LIDAR
@@ -80,9 +80,6 @@ try:
         time.time(0.5)
         lidar.start()
 
-        # On traite un scan sur 50 pour laisser le temps de calcul
-        if scan_counter % 50 != 0:
-            continue
 
         if previous_scan is None:
             previous_scan = scan
