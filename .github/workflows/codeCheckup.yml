@@ -1,0 +1,67 @@
+name: Dependencies and Linting
+
+on:
+  push:
+    branches:
+      - '**'  # Déclenche l'action sur chaque push dans toutes les branches.
+
+jobs:
+  dependencies_and_lint:
+    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu.
+
+    steps:
+      - name: Checkout repository  # Étape 1 : Récupérer le code du dépôt.
+        uses: actions/checkout@v4
+
+      # --- Récupérer les bibliothèques utilisées ---
+      - name: Create Python virtual environment  # Étape 2 : Créer un environnement virtuel.
+        run: python3 -m venv ENV
+
+      - name: Activate environment and install dependencies  # Étape 3 : Installer les bibliothèques Python détectées.
+        run: |
+          source ENV/bin/activate
+          pip install --upgrade pip
+          if [ -f "requirements.txt" ]; then pip install -r requirements.txt; fi
+
+      - name: List installed Python packages  # Étape 4 : Lister les bibliothèques Python et leurs versions.
+        run: |
+          source ENV/bin/activate
+          pip freeze > python_dependencies.txt
+          cat python_dependencies.txt
+
+      - name: Install C++ package manager (conan)  # Étape 5 : Installer Conan pour gérer les dépendances C++.
+        run: pip install conan
+
+      - name: Detect C++ dependencies with Conan  # Étape 6 : Lister les bibliothèques C++ utilisées.
+        run: |
+          conan profile detect
+          conan install . --build=missing
+          conan list > cpp_dependencies.txt
+          cat cpp_dependencies.txt
+
+      # --- Installer toutes les bibliothèques détectées ---
+      - name: Save dependencies as artifacts  # Étape 7 : Sauvegarder les fichiers des dépendances.
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependencies
+          path: |
+            python_dependencies.txt
+            cpp_dependencies.txt
+
+      # --- Vérifier le code avec un linter ---
+      - name: Run Python Linter (flake8) in virtual environment  # Étape 8 : Vérifier le code Python avec Flake8.
+        run: |
+          source ENV/bin/activate
+          pip install flake8
+          flake8 . --count --show-source --statistics --max-line-length=100
+
+      - name: Install dependencies for C++ Linters  # Étape 9 : Installer les outils nécessaires pour C++.
+        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+
+      - name: Run C++ Linter (Clang-Format)  # Étape 10 : Vérifier le formatage du code C++.
+        run: |
+          find . -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -Werror
+
+      - name: Run C++ Linter (Clang-Tidy)  # Étape 11 : Vérifier les erreurs avec Clang-Tidy.
+        run: |
+          find . -name "*.cpp" | xargs clang-tidy --warnings-as-errors=*
