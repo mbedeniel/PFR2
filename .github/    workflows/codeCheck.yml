@@ -1,0 +1,39 @@
+name: Lint Check
+
+on:
+  push:
+    branches:
+      - '**'  # Déclenche l'action sur chaque push dans toutes les branches.
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest  # Utilise une machine virtuelle Ubuntu.
+
+    steps:
+      - name: Checkout repository  # Étape 1 : Cloner le dépôt GitHub.
+        uses: actions/checkout@v4
+
+      - name: Install dependencies for C++  # Étape 2 : Installer les outils nécessaires pour C++.
+        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
+
+      - name: Create Python virtual environment  # Étape 3 : Créer un environnement virtuel.
+        run: python3 -m venv ENV
+
+      - name: Activate environment and install flake8  # Étape 4 : Installer Flake8 dans l'environnement virtuel.
+        run: |
+          source ENV/bin/activate
+          pip install --upgrade pip
+          pip install flake8
+
+      - name: Run Python Linter (flake8) in virtual environment  # Étape 5 : Exécuter Flake8 dans ENV.
+        run: |
+          source ENV/bin/activate
+          flake8 . --count --show-source --statistics --max-line-length=100
+
+      - name: Run C++ Linter (Clang-Format)  # Étape 6 : Vérifier le formatage du code C++.
+        run: |
+          find . -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -Werror
+
+      - name: Run C++ Linter (Clang-Tidy)  # Étape 7 : Vérifier les erreurs avec Clang-Tidy.
+        run: |
+          find . -name "*.cpp" | xargs clang-tidy --warnings-as-errors=*
