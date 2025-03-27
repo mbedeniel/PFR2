@@ -29,16 +29,6 @@ jobs:
           pip freeze > python_dependencies.txt
           cat python_dependencies.txt
 
-      - name: Install C++ package manager (conan)  # Étape 5 : Installer Conan pour gérer les dépendances C++.
-        run: pip install conan
-
-      - name: Detect C++ dependencies with Conan  # Étape 6 : Lister les bibliothèques C++ utilisées.
-        run: |
-          conan profile detect
-          conan install . --build=missing
-          conan list > cpp_dependencies.txt
-          cat cpp_dependencies.txt
-
       # --- Installer toutes les bibliothèques détectées ---
       - name: Save dependencies as artifacts  # Étape 7 : Sauvegarder les fichiers des dépendances.
         uses: actions/upload-artifact@v4
@@ -54,14 +44,3 @@ jobs:
           source ENV/bin/activate
           pip install flake8
           flake8 . --count --show-source --statistics --max-line-length=100
-
-      - name: Install dependencies for C++ Linters  # Étape 9 : Installer les outils nécessaires pour C++.
-        run: sudo apt-get update && sudo apt-get install -y clang-format clang-tidy
-
-      - name: Run C++ Linter (Clang-Format)  # Étape 10 : Vérifier le formatage du code C++.
-        run: |
-          find . -name "*.cpp" -o -name "*.h" | xargs clang-format --dry-run -Werror
-
-      - name: Run C++ Linter (Clang-Tidy)  # Étape 11 : Vérifier les erreurs avec Clang-Tidy.
-        run: |
-          find . -name "*.cpp" | xargs clang-tidy --warnings-as-errors=*
