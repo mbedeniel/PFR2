@@ -75,7 +75,7 @@ class TransformationUtils:
         if abs(translation) < 1.8 or abs(theta) < 0.8:
             return np.identity(3)
         else:
-            print("Déplacement:", round(translation), "mm, Rotation:", round(theta), "°")
+            #print("Déplacement:", round(translation), "mm, Rotation:", round(theta), "°")
             return T
 
     @staticmethod
@@ -165,9 +165,21 @@ class LidarLocaliser:
         self.init_scan = None
         self.scan_counter = 0
         self.scan_actual = scan_actual
+        self.objet = []
 
         self.fig, self.ax = plt.subplots()
 
+    def addObjet(self, objet):
+        """
+        Ajoute un objet à la liste des objets à afficher sur la carte.
+        
+        Parametres
+        ----------
+        objet : list
+            Liste contenant les coordonnées de l'objet à ajouter.
+        """
+        self.objet.append(objet)
+    
     def localize(self):
         """
         Boucle principale de localisation : traite les scans à intervalles réguliers,
@@ -206,9 +218,25 @@ class LidarLocaliser:
                     # Mise à jour graphique
                     self._update_plot(scan_cart, filtered_points)
 
-                    yield self.pos_robot[0]
+                    # Distance droite et gauche
+                    dAvant = None
+                    dArriere = None
+                    dDroite = None
+                    dGauche = None
+                    
+                    for i in range(len(scan)):
+                        if np.around(scan[i][1], decimals=0) == 0 or np.around(scan[i][1], decimals=0) == 360:
+                            dAvant = scan[i][2]
+                        elif np.around(scan[i][1], decimals=0) == 90:
+                            dDroite = scan[i][2]
+                        elif np.around(scan[i][1], decimals=0) == 180:
+                            dArriere = scan[i][2]
+                        elif np.around(scan[i][1], decimals=0) == 270:
+                            dGauche = scan[i][2]
+                    
+                    yield self.pos_robot[0] ,dAvant , dArriere, dDroite, dGauche
                 else:
-                    print("Scan ignoré (incohérent)")
+                    #print("Scan ignoré (incohérent)")
                     self.T_cumul = np.linalg.pinv(T) @ self.T_cumul
 
         except Exception as e:
@@ -239,23 +267,44 @@ class LidarLocaliser:
         self.ax.scatter(filtered_points[:, 0], filtered_points[:, 1], s=1, c='blue', label='Carte')
         self.ax.scatter(self.pos_robot[0][0], self.pos_robot[0][1], s=20, color='green', label='Robot')
 
+        cpt = 0
+        for objet in self.objet:
+            cpt += 1 
+            T_inv = np.linalg.pinv(self.T_cumul)
+            positionObjet = [[objet[0], objet[1]]]
+            positionObjet = np.dot(np.hstack([positionObjet, np.ones((1, 1))]), T_inv.T)[:, :2]
+            self.ax.scatter(positionObjet[0][0], positionObjet[0][1], s=20, color=objet[2], label='Objet_' + str(cpt))
+            
         self.ax.legend(loc='upper right')
         plt.savefig(self.map_filename)
 
-
-
-################################################################
-#exemple d'appel :
-################################################################
+############################################################################
+#                                   Exemple
+############################################################################
 
 
 if __name__ == "__main__":
     scanner = LidarScanner()
     localiser = LidarLocaliser(scanner, 
-                               scan_interval=100, 
+                               scan_interval=10, 
                                map_filename='map_output.png', 
                                scan_actual=True)
 
-    for position in localiser.localize(): #Agi comme un while true
-        print("Position actuelle du robot :", position)
+    iter = 0
+    for position,_,_,_,_ in localiser.localize():
+        #print("Position actuelle du robot :", position)
         
+        if iter == 10:
+            print("Ajout d'un objet à la carte")
+            ob1 = [100, 200, 'red']
+            localiser.addObjet(ob1)
+        
+        if iter == 20:
+            print("Ajout d'un objet à la carte")
+            ob2 = [300, 400, 'blue']
+            localiser.addObjet(ob2)
+        
+        if iter == 30:
+            break
+        
+        iter += 1
