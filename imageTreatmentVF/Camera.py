@@ -62,7 +62,6 @@ class ImageManager:
         # Construire la commande libcamera-still
         cmd = [
             'libcamera-still',
-            '-t', '0',
             '--width', str(cfg['width']),
             '--height', str(cfg['height']),
             '-o', full_path
