@@ -50,8 +50,8 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
     cmd = [
         'libcamera-still',
         '-t', '0',
-        '-w', str(cfg['width']),
-        '-h', str(cfg['height']),
+        '--with', str(cfg['width']),
+        '--height', str(cfg['height']),
         '-o', full_path
     ]
     # Gérer l'autofocus
