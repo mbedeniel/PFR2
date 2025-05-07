@@ -1,6 +1,11 @@
 import os
 import subprocess
 from typing import Optional, Dict, Any
+import os
+import subprocess
+import numpy as np
+import cv2
+from typing import Optional, Dict, Any
 
 def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = None) -> str:
     """
@@ -60,3 +65,48 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
         raise RuntimeError(f"Erreur lors de la capture de l'image: {e}")
 
     return full_path
+
+def uploader(nameImage: str, path: Optional[str] = None) -> np.ndarray:
+    """
+    Charge une image RGB à partir du disque à l'aide d'OpenCV.
+
+    Params:
+        nameImage (str): nom du fichier image avec extension (ex: 'photo.jpg')
+        path (str, optional): chemin vers le dossier contenant l'image (par défaut dossier courant)
+
+    Returns:
+        np.ndarray: matrice 3D représentant l'image en RGB
+    """
+    # Déterminer le chemin absolu du fichier image
+    image_dir = path or os.getcwd()
+    image_path = os.path.join(image_dir, nameImage)
+
+    if not os.path.isfile(image_path):
+        raise FileNotFoundError(f"Image introuvable à l'emplacement spécifié : {image_path}")
+
+    # Lire l'image avec OpenCV (en BGR par défaut)
+    bgr_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    if bgr_image is None:
+        raise RuntimeError(f"Échec du chargement de l'image avec OpenCV : {image_path}")
+
+    # Convertir BGR -> RGB
+    rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+
+    return rgb_image
+
+def hsvConverter(rgbImage: np.ndarray) -> np.ndarray:
+    """
+    Convertit une image RGB en image HSV.
+
+    Params:
+        rgbImage (np.ndarray): image en base RGB (3 canaux).
+
+    Returns:
+        np.ndarray: image en base HSV (3 canaux).
+    """
+    if rgbImage is None or rgbImage.ndim != 3 or rgbImage.shape[2] != 3:
+        raise ValueError("L'image RGB doit être une matrice 3D avec 3 canaux.")
+
+    hsvImage = cv2.cvtColor(rgbImage, cv2.COLOR_RGB2HSV)
+    return hsvImage
+
