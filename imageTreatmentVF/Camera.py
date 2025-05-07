@@ -67,16 +67,26 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
 
     return full_path
 
-def image_to_frame( image_path):
+def image_to_frame(image_path):
         """Lit une image depuis le disque et la convertit en frame OpenCV."""
+        """
+        Charge une image depuis un chemin donné et la retourne sous forme de matrice RGB.
+    
+        Params:
+            path (str) : Le chemin vers le fichier image, par exemple "chemin/vers/nomImage.extension".
+    
+        Returns:
+            np.ndarray : Une matrice de dimension 3 contenant l'image dans la base RGB.
+        """
         try:
-            image = Image.open(image_path).convert('RGB')
-            frame = np.array(image)
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            return frame
+            rbgImage = Image.open(image_path).convert('RGB')
+            rbgImage = np.array(image)
+            return rbgImage
         except Exception as e:
             print("Erreur lecture image :", e)
             return None
+            
+            
 def uploader(path) -> np.ndarray:
     """
     Charge une image depuis un chemin donné et la retourne sous forme de matrice RGB.
