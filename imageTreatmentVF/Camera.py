@@ -6,6 +6,7 @@ import subprocess
 import numpy as np
 import cv2
 from typing import Optional, Dict, Any
+from enum import Enum
 
 def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = None) -> str:
     """
@@ -66,33 +67,27 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
 
     return full_path
 
-def uploader(nameImage: str, path: Optional[str] = None) -> np.ndarray:
+def uploader(path) -> np.ndarray:
     """
-    Charge une image RGB à partir du disque à l'aide d'OpenCV.
+    Charge une image depuis un chemin donné et la retourne sous forme de matrice RGB.
 
     Params:
-        nameImage (str): nom du fichier image avec extension (ex: 'photo.jpg')
-        path (str, optional): chemin vers le dossier contenant l'image (par défaut dossier courant)
+        path (str) : Le chemin vers le fichier image, par exemple "chemin/vers/nomImage.extension".
 
     Returns:
-        np.ndarray: matrice 3D représentant l'image en RGB
+        np.ndarray : Une matrice de dimension 3 contenant l'image dans la base RGB.
     """
-    # Déterminer le chemin absolu du fichier image
-    image_dir = path or os.getcwd()
-    image_path = os.path.join(image_dir, nameImage)
+    # Charger l'image en couleur (OpenCV charge par défaut en BGR)
+    image_bgr = cv2.imread(path)
 
-    if not os.path.isfile(image_path):
-        raise FileNotFoundError(f"Image introuvable à l'emplacement spécifié : {image_path}")
+    if image_bgr is None:
+        raise ValueError(f"Impossible de charger l'image depuis le chemin {path}")
 
-    # Lire l'image avec OpenCV (en BGR par défaut)
-    bgr_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    if bgr_image is None:
-        raise RuntimeError(f"Échec du chargement de l'image avec OpenCV : {image_path}")
+    # Convertir l'image BGR en RGB
+    rgbImage = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
-    # Convertir BGR -> RGB
-    rgb_image = cv2.cvtColor(bgr_image, cv2.COLOR_BGR2RGB)
+    return rgbImage
 
-    return rgb_image
 
 def hsvConverter(rgbImage: np.ndarray) -> np.ndarray:
     """
@@ -109,4 +104,66 @@ def hsvConverter(rgbImage: np.ndarray) -> np.ndarray:
 
     hsvImage = cv2.cvtColor(rgbImage, cv2.COLOR_RGB2HSV)
     return hsvImage
+
+class Color(Enum):
+    BLUE = 1
+    YELLOW = 2
+    ORANGE = 3
+
+def binarizer(hsvImage: np.ndarray, color: Color) -> np.ndarray:
+    """
+    Applique un seuillage binaire sur une image HSV en fonction d'une couleur cible.
+
+    Params:
+        hsvImage (np.ndarray): image en base HSV (3 canaux).
+        color (Color): couleur cible (BLUE, YELLOW, ORANGE).
+
+    Returns:
+        np.ndarray: image binaire (1 canal), 0 pour pixels d'intérêt, 1 pour les autres.
+    """
+    if hsvImage is None or hsvImage.ndim != 3 or hsvImage.shape[2] != 3:
+        raise ValueError("L'image HSV doit être une matrice 3D avec 3 canaux.")
+
+    # Définir les intervalles HSV pour chaque couleur
+    if color == Color.BLUE:
+        lower = np.array([100, 100, 50])
+        upper = np.array([130, 255, 255])
+    elif color == Color.YELLOW:
+        lower = np.array([20, 100, 100])
+        upper = np.array([35, 255, 255])
+    elif color == Color.ORANGE:
+        lower = np.array([10, 100, 100])
+        upper = np.array([20, 255, 255])
+    else:
+        raise ValueError("Couleur non supportée")
+
+    # Créer le masque binaire inversé (0 pour la couleur cible, 1 ailleurs)
+    mask = cv2.inRange(hsvImage, lower, upper)
+    binaryImage = np.where(mask == 255, 0, 1).astype(np.uint8)
+
+    return binaryImage
+
+def medianFilter(binaryImage: np.ndarray, maskSize: int = 1) -> np.ndarray:
+    """
+    Applique un filtre médian sur une image binaire.
+
+    Params:
+        binaryImage (np.ndarray): matrice binaire 2D.
+        maskSize (int): taille du masque du filtre. Par défaut, maskSize = 1.
+
+    Returns:
+        np.ndarray: image filtrée par le filtre médian.
+    """
+    if binaryImage is None or binaryImage.ndim != 2:
+        raise ValueError("L'image binaryImage doit être une matrice 2D.")
+
+    # Calcul de la taille du masque du filtre médian
+    kernel_size = 2 * maskSize + 1  # Taille du noyau du filtre
+
+    # Appliquer le filtre médian avec la taille du noyau
+    filtedImage = cv2.medianBlur(binaryImage, kernel_size)
+
+    return filtedImage
+
+
 
