@@ -5,7 +5,7 @@ import cv2
 from typing import Optional, Dict, Any
 from enum import Enum
 
-class Camera:
+class ImageManager:
     def __init__(self, width: int = 640, height: int = 480, autofocus: bool = True, 
                  name: str = 'image', extension: str = '.jpg', path: str = './'):
         """
