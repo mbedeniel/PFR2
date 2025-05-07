@@ -50,7 +50,7 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
     cmd = [
         'libcamera-still',
         '-t', '0',
-        '--with', str(cfg['width']),
+        '--width', str(cfg['width']),
         '--height', str(cfg['height']),
         '-o', full_path
     ]
