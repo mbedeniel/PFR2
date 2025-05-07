@@ -56,7 +56,7 @@ def photographer(config: Optional[Dict[str, Any]] = None, path: Optional[str] = 
     ]
     # Gérer l'autofocus
     if cfg['autofocus']:
-        cmd.append('--autofocus-on-capture')
+        cmd.append('--autofocus-mode auto --autofocus-on-capture 1')
     # Si autofocus est False, on n'ajoute pas le flag et on utilise le focus fixe
 
     # Exécuter la commande
