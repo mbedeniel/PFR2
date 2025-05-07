@@ -64,11 +64,11 @@ class ImageManager:
             'libcamera-still',
             '--width', str(cfg['width']),
             '--height', str(cfg['height']),
-            '-o', full_path
         ]
         # Gérer l'autofocus
         if cfg['autofocus']:
             cmd.append('--autofocus-mode auto --autofocus-on-capture 1')
+        cmd.append(f'-o {full_path}')
 
         # Exécuter la commande
         try:
