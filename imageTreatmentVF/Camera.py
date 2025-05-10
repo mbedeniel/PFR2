@@ -25,6 +25,18 @@ class ImageManager:
         self.name = name
         self.extension = extension
         self.path = path
+        ####cette fonction fera bien le taf 
+        je te la donne comme cadeau :)
+     def capTure(self):
+        # Exécuter la commande libcamera-still
+        subprocess.run([
+            "libcamera-still", "-n", "-t", "0", "--immediate",
+            "--width", "640", "--height", "480", "-o", "image.jpg"
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        frame = cv2.imread("image.jpg")
+        return frame
+
 
     def photographer(self, config: Optional[Dict[str, Any]] = None) -> str:
         """
