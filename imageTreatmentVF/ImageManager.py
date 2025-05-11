@@ -66,7 +66,7 @@ class ImageManager:
         # Gérer l'autofocus
         if cfg['autofocus']:
             cmd += ['--autofocus-mode', 'auto', '--autofocus-on-capture', '1']
-        cmd.append(f'-o {full_path}')
+        cmd += ['-o', full_path]
 
         # Exécuter la commande
         try:
