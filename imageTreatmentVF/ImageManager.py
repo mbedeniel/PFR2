@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 
 from Color import *
-
+from ObjectNature import *
 
 class ImageManager:
 
@@ -12,7 +12,7 @@ class ImageManager:
                  name: str = 'image', extension: str = '.jpg', path: str = './',
                  rgbImage: np.ndarray = None, hsvImage: np.ndarray = None,
                  binaryImage: np.ndarray = None, filteredImage: np.ndarray = None,
-                 segmentedImage: list = None):
+                 segmentedImage: list = None, objects: list = None):
         self.width = width
         self.height = height
         self.autofocus = autofocus
@@ -26,6 +26,7 @@ class ImageManager:
         self.binaryImage = binaryImage if binaryImage is not None else np.array([])
         self.filteredImage = filteredImage if filteredImage is not None else np.array([])
         self.segmentedImage = segmentedImage if segmentedImage is not None else []
+        self.objects = objects if objects is not None else []
 
     def photographer(self) :
         """
@@ -215,4 +216,52 @@ class ImageManager:
             region = np.where(markers == label, 1, 0).astype(np.uint8)
             if np.count_nonzero(region) > 1:
                 self.segmentedImage.append(region)
+
+    def shapeIdentifier(self, color: Color):
+        """
+        Identifie la forme principale dans self.filteredImage : carré, cercle ou forme inconnue.
+
+        Returns:
+            str: Type de la forme détectée ("carré", "cercle", "inconnue").
+        """
+        filtered = self.filteredImage
+
+        if filtered is None or filtered.ndim != 2:
+            raise ValueError("filteredImage doit être une image binaire 2D.")
+
+        # Trouver les contours
+        contours, _ = cv2.findContours(filtered, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        if not contours:
+            print("inconnue")
+
+        # Prendre le plus grand contour (en cas de bruit résiduel)
+        largest_contour = max(contours, key=cv2.contourArea)
+
+        # Approximation du contour
+        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
+        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+
+        # Identifier la forme
+        if len(approx) == 4:
+            self.objects.append(
+                {
+                    Color : color,
+                    ObjectNature : ObjectNature.CUBE
+                }
+            )
+        elif len(approx) >= 7:
+            self.objects.append(
+                {
+                    Color: color,
+                    ObjectNature: ObjectNature.BALL
+                }
+            )
+        else:
+            self.objects.append(
+                {
+                    Color: color,
+                    ObjectNature: ObjectNature.NONE
+                }
+            )
 

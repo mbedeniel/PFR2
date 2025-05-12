@@ -9,7 +9,7 @@ image_manager = ImageManager()
 # Capture de l'image
 #image_manager.photographer()
 
-image_manager.path = "./image/WhatsApp6.jpeg"
+image_manager.path = "./image/cubeYBO.jpg"
 
 # Upload image
 image_manager.uploader()

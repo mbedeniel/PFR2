@@ -4,3 +4,4 @@ class Color(Enum):
     BLUE = 1
     YELLOW = 2
     ORANGE = 3
+    NONE = 4
