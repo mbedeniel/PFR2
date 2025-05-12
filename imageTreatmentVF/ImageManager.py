@@ -144,7 +144,7 @@ class ImageManager:
 
         self.binaryImage = np.where(mask == 255, 0, 1).astype(np.uint8)
 
-    def medianFilter(self, maskSize: int = 1) :
+    def medianFilter(self, maskSize: int = 7) :
         """
         Applique un filtre médian sur une image binaire.
 
@@ -209,8 +209,10 @@ class ImageManager:
 
         self.segmentedImage = []
         # Générer une image binaire pour chaque label > 1
+        nbMin = (self.width * self.height) * 0.03
+        # 3% of the total size of the image
         for label in range(2, markers.max() + 1):
             region = np.where(markers == label, 1, 0).astype(np.uint8)
-            if np.count_nonzero(region) > 0:
+            if np.count_nonzero(region) > 1:
                 self.segmentedImage.append(region)
 

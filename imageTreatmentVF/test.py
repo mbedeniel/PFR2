@@ -1,119 +1,83 @@
-import matplotlib
-import numpy as np
-matplotlib.use('TkAgg')
-
-import matplotlib.pyplot as plt
 from ImageManager import ImageManager
 from Color import Color
+import numpy as np
+import cv2
 
 # Initialisation
 image_manager = ImageManager()
-image_path = './image/cubeYBO.jpg'
-image_manager.path = image_path
-image_manager.uploader()
 
-# Affichage de l'image RGB
-plt.figure(figsize=(16, 30))
-plt.subplot(7, 4, 1)
-plt.imshow(image_manager.rgbImage)
-plt.title("rgbImage")
-plt.axis('off')
+# Capture de l'image
+#image_manager.photographer()
+
+image_manager.path = "./image/WhatsApp6.jpeg"
+
+# Upload image
+image_manager.uploader()
+cv2.imwrite("uploadImage.jpg", cv2.cvtColor(image_manager.rgbImage, cv2.COLOR_RGB2BGR))
 
 # HSV
 image_manager.hsvConverter()
 
+# Filtering and thresholding
 
-### === BLEU ===
+######################################################### BLUE #########################################################
 image_manager.binarizer(Color.BLUE)
-image_manager.medianFilter(maskSize=7)
+image_manager.medianFilter(7)
 
-plt.subplot(7, 4, 5)
-plt.imshow(image_manager.filteredImage, cmap='gray')
-plt.title("filteredImageBLUE")
-plt.axis('off')
+binaryImage = image_manager.binaryImage * 255
+binaryImage = binaryImage.astype(np.uint8)
+
+cv2.imwrite('filteredImageBLUE.jpg', binaryImage)
 
 # Segmentation
 image_manager.segmentation()
 
-# Calculer les tailles des segments
-segment_sizes = [np.count_nonzero(seg) for seg in image_manager.segmentedImage]
+print("Number of BLUE object : ",len(image_manager.segmentedImage))
+for idx, img in enumerate(image_manager.segmentedImage, 1):
+    # Arrange pixel
+    segmentImage = (1 - img) * 255
+    segmentImage = segmentImage.astype(np.uint8)
+    # Save
+    cv2.imwrite(f"segmentImageBLUE{idx}.jpg", segmentImage)
 
-# Trier les segments par taille (du plus grand au plus petit)
-sorted_segments = sorted(zip(segment_sizes, image_manager.segmentedImage), key=lambda x: x[0], reverse=True)
-
-# Afficher les 2 plus grands segments
-plt.figure(figsize=(16, 12))
-for i, (size, seg) in enumerate(sorted_segments[:2]):
-    plt.subplot(1, 2, i + 1)
-    plt.imshow(seg, cmap='gray')
-    plt.title(f"Largest Segment {i + 1} ({size} pixels)")
-    plt.axis('off')
-
-plt.tight_layout()
-plt.show()
-
-
-
-### === ORANGE ===
+######################################################### ORANGE #########################################################
 image_manager.binarizer(Color.ORANGE)
-image_manager.medianFilter(maskSize=7)
+image_manager.medianFilter(7)
 
-plt.subplot(7, 4, 13)
-plt.imshow(image_manager.filteredImage, cmap='gray')
-plt.title("filteredImageORANGE")
-plt.axis('off')
+binaryImage = image_manager.binaryImage * 255
+binaryImage = binaryImage.astype(np.uint8)
+
+cv2.imwrite('filteredImageORANGE.jpg', binaryImage)
 
 # Segmentation
 image_manager.segmentation()
 
-# Calculer les tailles des segments
-segment_sizes = [np.count_nonzero(seg) for seg in image_manager.segmentedImage]
+print("Number of ORANGE object : ",len(image_manager.segmentedImage))
+for idx, img in enumerate(image_manager.segmentedImage, 1):
+    # Arrange pixel
+    segmentImage = (1 - img) * 255
+    segmentImage = segmentImage.astype(np.uint8)
+    # Save
+    cv2.imwrite(f"segmentImageORANGE{idx}.jpg", segmentImage)
 
-# Trier les segments par taille (du plus grand au plus petit)
-sorted_segments = sorted(zip(segment_sizes, image_manager.segmentedImage), key=lambda x: x[0], reverse=True)
-
-# Afficher les 2 plus grands segments
-plt.figure(figsize=(16, 12))
-for i, (size, seg) in enumerate(sorted_segments[:2]):
-    plt.subplot(1, 2, i + 1)
-    plt.imshow(seg, cmap='gray')
-    plt.title(f"Largest Segment {i + 1} ({size} pixels)")
-    plt.axis('off')
-
-plt.tight_layout()
-plt.show()
-
-
-
-### === JAUNE ===
+######################################################### YELLOW #########################################################
 image_manager.binarizer(Color.YELLOW)
-image_manager.medianFilter(maskSize=7)
+image_manager.medianFilter(7)
 
-plt.subplot(7, 4, 21)
-plt.imshow(image_manager.filteredImage, cmap='gray')
-plt.title("filteredImageYELLOW")
-plt.axis('off')
+binaryImage = image_manager.binaryImage * 255
+binaryImage = binaryImage.astype(np.uint8)
+
+cv2.imwrite('filteredImageYELLOW.jpg', binaryImage)
 
 # Segmentation
 image_manager.segmentation()
 
-# Calculer les tailles des segments
-segment_sizes = [np.count_nonzero(seg) for seg in image_manager.segmentedImage]
-
-# Trier les segments par taille (du plus grand au plus petit)
-sorted_segments = sorted(zip(segment_sizes, image_manager.segmentedImage), key=lambda x: x[0], reverse=True)
-
-# Afficher les 2 plus grands segments
-plt.figure(figsize=(16, 12))
-for i, (size, seg) in enumerate(sorted_segments[:2]):
-    plt.subplot(1, 2, i + 1)
-    plt.imshow(seg, cmap='gray')
-    plt.title(f"Largest Segment {i + 1} ({size} pixels)")
-    plt.axis('off')
-
-plt.tight_layout()
-plt.show()
+print("Number of YELLOW object : ",len(image_manager.segmentedImage))
+for idx, img in enumerate(image_manager.segmentedImage, 1):
+    # Arrange pixel
+    segmentImage = (1 - img) * 255
+    segmentImage = segmentImage.astype(np.uint8)
+    # Save
+    cv2.imwrite(f"segmentImageYELLOW{idx}.jpg", segmentImage)
 
 
-plt.tight_layout()
-plt.show()
