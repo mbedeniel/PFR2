@@ -191,6 +191,8 @@ class LidarLocaliser:
         self.scan_counter = 0
         self.scan_actual = scan_actual
         self.objet = []
+        self.theta_deg = None
+        self.centrePiece = None
 
         self.fig, self.ax = plt.subplots()
 
@@ -242,7 +244,7 @@ class LidarLocaliser:
                     
                     R = T_inv[:2, :2]
                     theta = np.arctan2(R[1, 0], R[0, 0])  # angle en radians
-                    theta_deg = np.degrees(theta)         # angle en degrés si besoin
+                    self.theta_deg = np.degrees(theta)         # angle en degrés si besoin
 
                     # Mise à jour graphique
                     self._update_plot(scan_cart, filtered_points)
@@ -263,7 +265,9 @@ class LidarLocaliser:
                         elif np.around(scan[i][1], decimals=0) == 270:
                             dGauche = scan[i][2]
                     
-                    yield self.pos_robot[0],theta_deg ,dAvant , dArriere, dDroite, dGauche, TransformationUtils.calculer_barycentre(scan)
+                    self.centrePiece = TransformationUtils.calculer_barycentre(self.init_scan)
+                    
+                    yield self.pos_robot[0], self.theta_deg ,dAvant , dArriere, dDroite, dGauche, TransformationUtils.calculer_barycentre(self.init_scan)
                 else:
                     #print("Scan ignoré (incohérent)")
                     self.T_cumul = np.linalg.pinv(T) @ self.T_cumul
@@ -307,6 +311,30 @@ class LidarLocaliser:
             
         self.ax.legend(loc='upper right')
         plt.savefig(self.map_filename)
+    
+    def get_position_rotation(self):
+        """
+        Retourne la position et la rotation du robot.
+        
+        Retourne
+        -------
+        tuple
+            Position (x, y) et angle de rotation en degrés.
+        """
+        return self.pos_robot[0], self.theta_deg
+    
+    def get_centre_piece(self):
+        """
+        Retourne le centre de la pièce détectée.
+        
+        Retourne
+        -------
+        tuple
+            Coordonnées (x, y) du centre de la pièce.
+        """
+        return self.centrePiece
+    
+    
 
 
 
