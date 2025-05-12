@@ -8,6 +8,7 @@ from scipy.spatial import cKDTree
 import matplotlib
 matplotlib.use('Agg')  # Empêche l'affichage de la fenêtre matplotlib
 import matplotlib.pyplot as plt
+import threading
 
 #-------------------------------------------------------------------
 """
@@ -91,6 +92,30 @@ class TransformationUtils:
         tree = cKDTree(points)
         clusters = tree.query_ball_tree(tree, threshold)
         return np.array([np.mean(points[cluster], axis=0) for cluster in clusters])
+    
+    @staticmethod
+    def calculer_barycentre(scan):
+        """
+        Calcule le barycentre pondéré des points d'un scan LIDAR.
+
+        scan : liste de tuples (qualité, angle en degrés, distance en mm)
+        retourne : tuple (x, y) du barycentre pondéré
+        """
+        points = TransformationUtils.polaire_to_cartesien(scan)  # [(x1, y1), (x2, y2), ...]
+        distances = np.array([d for _, _, d in scan])  # distances en mm
+
+        if len(points) == 0 or np.sum(distances) == 0:
+            return (0.0, 0.0)
+
+        points = np.array(points)
+        weights = distances  # poids linéaires, plus la distance est grande, plus ça pèse
+
+        # barycentre pondéré
+        x_bar = np.average(points[:, 0], weights=weights)
+        y_bar = np.average(points[:, 1], weights=weights)
+        
+        return (x_bar, y_bar)
+
 
 
 class LidarScanner:
@@ -214,6 +239,10 @@ class LidarLocaliser:
 
                     self.pos_robot = [[0, 0]]
                     self.pos_robot = np.dot(np.hstack([self.pos_robot, np.ones((1, 1))]), T_inv.T)[:, :2]
+                    
+                    R = T_inv[:2, :2]
+                    theta = np.arctan2(R[1, 0], R[0, 0])  # angle en radians
+                    theta_deg = np.degrees(theta)         # angle en degrés si besoin
 
                     # Mise à jour graphique
                     self._update_plot(scan_cart, filtered_points)
@@ -234,13 +263,14 @@ class LidarLocaliser:
                         elif np.around(scan[i][1], decimals=0) == 270:
                             dGauche = scan[i][2]
                     
-                    yield self.pos_robot[0] ,dAvant , dArriere, dDroite, dGauche
+                    yield self.pos_robot[0],theta_deg ,dAvant , dArriere, dDroite, dGauche, TransformationUtils.calculer_barycentre(scan)
                 else:
                     #print("Scan ignoré (incohérent)")
                     self.T_cumul = np.linalg.pinv(T) @ self.T_cumul
 
         except Exception as e:
             print("Erreur :", e)
+            
             traceback.print_exc()
         finally:
             self.scanner.stop()
@@ -278,33 +308,25 @@ class LidarLocaliser:
         self.ax.legend(loc='upper right')
         plt.savefig(self.map_filename)
 
-############################################################################
-#                                   Exemple
-############################################################################
 
 
 if __name__ == "__main__":
+    
     scanner = LidarScanner()
     localiser = LidarLocaliser(scanner, 
                                scan_interval=10, 
                                map_filename='map_output.png', 
-                               scan_actual=True)
-
+                               scan_actual=False)
     iter = 0
-    for position,_,_,_,_ in localiser.localize():
+    for position,theta_deg,_,_,_,_,centre in localiser.localize():
         #print("Position actuelle du robot :", position)
         
-        if iter == 10:
+        if iter == 200:
             print("Ajout d'un objet à la carte")
-            ob1 = [100, 200, 'red']
-            localiser.addObjet(ob1)
-        
-        if iter == 20:
-            print("Ajout d'un objet à la carte")
-            ob2 = [300, 400, 'blue']
+            ob2 = [centre[0], centre[1], 'purple']  
             localiser.addObjet(ob2)
-        
-        if iter == 30:
+            
+        if iter == 200:
             break
         
         iter += 1
