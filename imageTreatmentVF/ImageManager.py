@@ -280,5 +280,3 @@ class ImageManager:
                                     ObjectNature: ObjectNature.NONE
                                 }
                             )
-        print(self.objects)
-
