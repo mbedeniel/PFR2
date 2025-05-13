@@ -237,6 +237,16 @@ class ImageManager:
 
                 for binaryImage in self.segmentedImage :
 
+                    # +1 => object a the right
+                    # -1 => object a the left
+
+                    if self.centroidGetter(binaryImage) < self.width/2 :
+                        position = +1
+                    elif self.centroidGetter(binaryImage) > self.width/2:
+                        position = -1
+                    else :
+                        position = 0
+
                     if binaryImage is None or binaryImage.ndim != 2:
                         raise ValueError("filteredImage doit être une image binaire 2D.")
 
@@ -280,3 +290,12 @@ class ImageManager:
                                     ObjectNature: ObjectNature.NONE
                                 }
                             )
+
+    @staticmethod
+    def centroidGetter(binary_image):
+        moments = cv2.moments(binary_image)
+        if moments["m00"] != 0:
+            cx = int(moments["m10"] / moments["m00"])
+            return cx
+        else:
+            return None
