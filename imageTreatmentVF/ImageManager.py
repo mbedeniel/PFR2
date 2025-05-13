@@ -273,21 +273,24 @@ class ImageManager:
                             self.objects.append(
                                 {
                                     Color : color,
-                                    ObjectNature : ObjectNature.CUBE
+                                    ObjectNature : ObjectNature.CUBE,
+                                    int : position
                                 }
                             )
                         elif len(approx) >= 7:
                             self.objects.append(
                                 {
                                     Color: color,
-                                    ObjectNature: ObjectNature.BALL
+                                    ObjectNature: ObjectNature.BALL,
+                                    int : position
                                 }
                             )
                         else:
                             self.objects.append(
                                 {
                                     Color: color,
-                                    ObjectNature: ObjectNature.NONE
+                                    ObjectNature: ObjectNature.NONE,
+                                    int : position
                                 }
                             )
 
