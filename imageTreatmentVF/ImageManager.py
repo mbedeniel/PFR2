@@ -257,7 +257,8 @@ class ImageManager:
                         self.objects.append(
                             {
                                 Color: color,
-                                ObjectNature: ObjectNature.NONE
+                                ObjectNature: ObjectNature.NONE,
+                                int : position
                             }
                         )
                     else :
