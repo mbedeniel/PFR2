@@ -9,7 +9,7 @@ image_manager = ImageManager()
 # Capture de l'image
 #image_manager.photographer()
 
-image_manager.path = "./image/cubeYBO.jpg"
+image_manager.path = "./image/WhatsApp2.jpeg"
 
 # Upload image
 image_manager.uploader()
@@ -30,7 +30,7 @@ binaryImage = binaryImage.astype(np.uint8)
 cv2.imwrite('filteredImageBLUE.jpg', binaryImage)
 
 # Segmentation
-image_manager.segmentation()
+image_manager.segmentationManager()
 
 print("Number of BLUE object : ",len(image_manager.segmentedImage))
 for idx, img in enumerate(image_manager.segmentedImage, 1):
@@ -50,7 +50,7 @@ binaryImage = binaryImage.astype(np.uint8)
 cv2.imwrite('filteredImageORANGE.jpg', binaryImage)
 
 # Segmentation
-image_manager.segmentation()
+image_manager.segmentationManager()
 
 print("Number of ORANGE object : ",len(image_manager.segmentedImage))
 for idx, img in enumerate(image_manager.segmentedImage, 1):
@@ -70,7 +70,7 @@ binaryImage = binaryImage.astype(np.uint8)
 cv2.imwrite('filteredImageYELLOW.jpg', binaryImage)
 
 # Segmentation
-image_manager.segmentation()
+image_manager.segmentationManager()
 
 print("Number of YELLOW object : ",len(image_manager.segmentedImage))
 for idx, img in enumerate(image_manager.segmentedImage, 1):
@@ -79,5 +79,7 @@ for idx, img in enumerate(image_manager.segmentedImage, 1):
     segmentImage = segmentImage.astype(np.uint8)
     # Save
     cv2.imwrite(f"segmentImageYELLOW{idx}.jpg", segmentImage)
+
+image_manager.objectAnalyser()
 
 

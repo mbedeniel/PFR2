@@ -6,6 +6,7 @@ import cv2
 from Color import *
 from ObjectNature import *
 
+
 class ImageManager:
 
     def __init__(self, width: int = 640, height: int = 480, autofocus: bool = True,
@@ -167,7 +168,7 @@ class ImageManager:
 
         self.filteredImage = cv2.medianBlur(binaryImage, kernel_size)
 
-    def segmentation(self):
+    def segmentationManager(self):
         """
         Segmente une image binaire en régions distinctes à l'aide de l'algorithme Watershed.
 
@@ -217,51 +218,67 @@ class ImageManager:
             if np.count_nonzero(region) > 1:
                 self.segmentedImage.append(region)
 
-    def shapeIdentifier(self, color: Color):
+    def objectAnalyser(self):
         """
         Identifie la forme principale dans self.filteredImage : carré, cercle ou forme inconnue.
 
         Returns:
             str: Type de la forme détectée ("carré", "cercle", "inconnue").
         """
-        filtered = self.filteredImage
+        self.objects = []
 
-        if filtered is None or filtered.ndim != 2:
-            raise ValueError("filteredImage doit être une image binaire 2D.")
+        for color in Color:
 
-        # Trouver les contours
-        contours, _ = cv2.findContours(filtered, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            if color != Color.NONE:
 
-        if not contours:
-            print("inconnue")
+                self.binarizer(color)
+                self.medianFilter()
+                self.segmentationManager()
 
-        # Prendre le plus grand contour (en cas de bruit résiduel)
-        largest_contour = max(contours, key=cv2.contourArea)
+                for binaryImage in self.segmentedImage :
 
-        # Approximation du contour
-        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
-        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+                    if binaryImage is None or binaryImage.ndim != 2:
+                        raise ValueError("filteredImage doit être une image binaire 2D.")
 
-        # Identifier la forme
-        if len(approx) == 4:
-            self.objects.append(
-                {
-                    Color : color,
-                    ObjectNature : ObjectNature.CUBE
-                }
-            )
-        elif len(approx) >= 7:
-            self.objects.append(
-                {
-                    Color: color,
-                    ObjectNature: ObjectNature.BALL
-                }
-            )
-        else:
-            self.objects.append(
-                {
-                    Color: color,
-                    ObjectNature: ObjectNature.NONE
-                }
-            )
+                    # Trouver les contours
+                    contours, _ = cv2.findContours(binaryImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                    if not contours:
+                        self.objects.append(
+                            {
+                                Color: color,
+                                ObjectNature: ObjectNature.NONE
+                            }
+                        )
+                    else :
+                        # Prendre le plus grand contour (en cas de bruit résiduel)
+                        largest_contour = max(contours, key=cv2.contourArea)
+
+                        # Approximation du contour
+                        epsilon = 0.02 * cv2.arcLength(largest_contour, True)
+                        approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+
+                        # Identifier la forme
+                        if len(approx) == 4:
+                            self.objects.append(
+                                {
+                                    Color : color,
+                                    ObjectNature : ObjectNature.CUBE
+                                }
+                            )
+                        elif len(approx) >= 7:
+                            self.objects.append(
+                                {
+                                    Color: color,
+                                    ObjectNature: ObjectNature.BALL
+                                }
+                            )
+                        else:
+                            self.objects.append(
+                                {
+                                    Color: color,
+                                    ObjectNature: ObjectNature.NONE
+                                }
+                            )
+        print(self.objects)
 
