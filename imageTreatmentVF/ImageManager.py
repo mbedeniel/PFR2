@@ -29,6 +29,25 @@ class ImageManager:
         self.segmentedImage = segmentedImage if segmentedImage is not None else []
         self.objects = objects if objects is not None else []
 
+    def start(self):
+        """
+            This method start the imageTreatment
+        """
+        # take image
+        self.photographer()
+
+        # Upload image
+        self.uploader()
+
+        # HSV
+        self.hsvConverter()
+
+        # detect object
+        self.objectAnalyser()
+
+        # leave resources
+        self.proessKiller()
+
     def photographer(self) :
         """
         Capture une image à l'aide de la commande libcamera-still.
@@ -152,7 +171,7 @@ class ImageManager:
 
         Params:
             binaryImage (np.ndarray): matrice binaire 2D.
-            maskSize (int): taille du masque du filtre. Par défaut, maskSize = 1.
+            maskSize (int): taille du masque du filtre. Par défaut, maskSize = 7.
 
         Returns: NONE
             np.ndarray: image filtrée par le filtre médian.
@@ -240,12 +259,13 @@ class ImageManager:
                     # +1 => object a the right
                     # -1 => object a the left
 
-                    if self.centroidGetter(binaryImage) < self.width/2 :
-                        position = +1
-                    elif self.centroidGetter(binaryImage) > self.width/2:
-                        position = -1
-                    else :
+                    cx = self.centroidGetter(binaryImage)
+                    if cx is None:
                         position = 0
+                    elif cx < self.width / 2:
+                        position = +1
+                    else:
+                        position = -1
 
                     if binaryImage is None or binaryImage.ndim != 2:
                         raise ValueError("filteredImage doit être une image binaire 2D.")
@@ -256,9 +276,9 @@ class ImageManager:
                     if not contours:
                         self.objects.append(
                             {
-                                Color: color,
-                                ObjectNature: ObjectNature.NONE,
-                                int : position
+                                "color": color,
+                                "ObjectNature": ObjectNature.CUBE,
+                                "position": position
                             }
                         )
                     else :
@@ -273,25 +293,25 @@ class ImageManager:
                         if len(approx) == 4:
                             self.objects.append(
                                 {
-                                    Color : color,
-                                    ObjectNature : ObjectNature.CUBE,
-                                    int : position
+                                    "color" : color,
+                                    "ObjectNature" : ObjectNature.CUBE,
+                                    "position" : position
                                 }
                             )
                         elif len(approx) >= 7:
                             self.objects.append(
                                 {
-                                    Color: color,
-                                    ObjectNature: ObjectNature.BALL,
-                                    int : position
+                                    "color": color,
+                                    "ObjectNature": ObjectNature.BALL,
+                                    "position": position
                                 }
                             )
                         else:
                             self.objects.append(
                                 {
-                                    Color: color,
-                                    ObjectNature: ObjectNature.NONE,
-                                    int : position
+                                    "color": color,
+                                    "ObjectNature": ObjectNature.NONE,
+                                    "position": position
                                 }
                             )
 
@@ -303,3 +323,20 @@ class ImageManager:
             return cx
         else:
             return None
+
+    @staticmethod
+    def proessKiller():
+        try:
+            # Récupérer les PIDs des processus qui utilisent /dev/video0
+            result = subprocess.check_output(
+                "lsof /dev/video0 | awk 'NR>1 {print $2}'",
+                shell=True,
+                text=True
+            )
+            pids = result.strip().split('\n')
+            # Vérifier qu'il y a bien des PID à tuer
+            if pids and pids != ['']:
+                subprocess.run(['sudo', 'kill', '-9'] + pids, check=True)
+        except subprocess.CalledProcessError:
+            pass  # Silencieusement ignorer si aucun processus ne tient la caméra
+
