@@ -2,18 +2,19 @@ import os
 import subprocess
 import numpy as np
 import cv2
+import math
 
 from Color import *
-from ObjectNature import *
+from Nature import *
 
 
 class ImageManager:
 
     def __init__(self, width: int = 640, height: int = 480, autofocus: bool = True,
                  name: str = 'image', extension: str = '.jpg', path: str = './',
-                 rgbImage: np.ndarray = None, hsvImage: np.ndarray = None,
-                 binaryImage: np.ndarray = None, filteredImage: np.ndarray = None,
-                 segmentedImage: list = None, objects: list = None):
+                 rgb_image: np.ndarray = None, hsv_image: np.ndarray = None,
+                 binary_image: np.ndarray = None, filtered_image: np.ndarray = None,
+                 segmented_image: list = None, objects: list = None):
         self.width = width
         self.height = height
         self.autofocus = autofocus
@@ -22,11 +23,11 @@ class ImageManager:
         self.path = path
 
         # Vérification si les images sont fournies, sinon initialisation à des valeurs par défaut (ex: tableau vide ou `None`)
-        self.rgbImage = rgbImage if rgbImage is not None else np.array([])
-        self.hsvImage = hsvImage if hsvImage is not None else np.array([])
-        self.binaryImage = binaryImage if binaryImage is not None else np.array([])
-        self.filteredImage = filteredImage if filteredImage is not None else np.array([])
-        self.segmentedImage = segmentedImage if segmentedImage is not None else []
+        self.rgb_image = rgb_image if rgb_image is not None else np.array([])
+        self.hsv_image = hsv_image if hsv_image is not None else np.array([])
+        self.binary_image = binary_image if binary_image is not None else np.array([])
+        self.filtered_image = filtered_image if filtered_image is not None else np.array([])
+        self.segmented_image = segmented_image if segmented_image is not None else []
         self.objects = objects if objects is not None else []
 
     def start(self):
@@ -40,13 +41,13 @@ class ImageManager:
         self.uploader()
 
         # HSV
-        self.hsvConverter()
+        self.hsv_converter()
 
         # detect object
-        self.objectAnalyser()
+        self.object_analyser()
 
         # leave resources
-        self.proessKiller()
+        self.process_killer()
 
     def photographer(self) :
         """
@@ -114,37 +115,37 @@ class ImageManager:
 
         # Convertir l'image BGR en RGB
 
-        self.rgbImage = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        self.rgb_image = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
-    def hsvConverter(self):
+    def hsv_converter(self):
         """
         Convertit une image RGB en image HSV.
 
         Params:
-            rgbImage (np.ndarray): image en base RGB (3 canaux).
+            rgb_image (np.ndarray): image en base RGB (3 canaux).
 
         Returns: NONE
             np.ndarray: image en base HSV (3 canaux).
         """
-        rgbImage = self.rgbImage
-        if rgbImage is None or rgbImage.ndim != 3 or rgbImage.shape[2] != 3:
+        rgb_image = self.rgb_image
+        if rgb_image is None or rgb_image.ndim != 3 or rgb_image.shape[2] != 3:
             raise ValueError("L'image RGB doit être une matrice 3D avec 3 canaux.")
 
-        self.hsvImage = cv2.cvtColor(rgbImage, cv2.COLOR_RGB2HSV)
+        self.hsv_image = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
 
     def binarizer(self, color: Color):
         """
         Applique un seuillage binaire sur une image HSV en fonction d'une couleur cible.
 
         Params:
-            hsvImage (np.ndarray): image en base HSV (3 canaux).
+            hsv_image (np.ndarray): image en base HSV (3 canaux).
             color (Color): couleur cible (BLUE, YELLOW, ORANGE).
 
         Returns: NONE
             np.ndarray: image binaire (1 canal), 0 pour pixels d'intérêt, 1 pour les autres.
         """
-        hsvImage = self.hsvImage
-        if hsvImage is None or hsvImage.ndim != 3 or hsvImage.shape[2] != 3:
+        hsv_image = self.hsv_image
+        if hsv_image is None or hsv_image.ndim != 3 or hsv_image.shape[2] != 3:
             raise ValueError("L'image HSV doit être une matrice 3D avec 3 canaux.")
 
         # Définir les intervalles HSV pour chaque couleur
@@ -161,33 +162,33 @@ class ImageManager:
             raise ValueError("Couleur non supportée")
 
         # Créer le masque binaire inversé (0 pour la couleur cible, 1 ailleurs)
-        mask = cv2.inRange(hsvImage, lower, upper)
+        mask = cv2.inRange(hsv_image, lower, upper)
 
-        self.binaryImage = np.where(mask == 255, 0, 1).astype(np.uint8)
+        self.binary_image = np.where(mask == 255, 0, 1).astype(np.uint8)
 
-    def medianFilter(self, maskSize: int = 7) :
+    def median_filter(self, mask_size: int = 7) :
         """
         Applique un filtre médian sur une image binaire.
 
         Params:
-            binaryImage (np.ndarray): matrice binaire 2D.
+            binary_image (np.ndarray): matrice binaire 2D.
             maskSize (int): taille du masque du filtre. Par défaut, maskSize = 7.
 
         Returns: NONE
             np.ndarray: image filtrée par le filtre médian.
         """
-        binaryImage = self.binaryImage
-        if binaryImage is None or binaryImage.ndim != 2:
-            raise ValueError("L'image binaryImage doit être une matrice 2D.")
+        binary_image = self.binary_image
+        if binary_image is None or binary_image.ndim != 2:
+            raise ValueError("L'image binary_image doit être une matrice 2D.")
 
         # Calcul de la taille du masque du filtre médian
-        kernel_size = 2 * maskSize + 1  # Taille du noyau du filtre
+        kernel_size = 2 * mask_size + 1  # Taille du noyau du filtre
 
         # Appliquer le filtre médian avec la taille du noyau
 
-        self.filteredImage = cv2.medianBlur(binaryImage, kernel_size)
+        self.filtered_image = cv2.medianBlur(binary_image, kernel_size)
 
-    def segmentationManager(self):
+    def segmentation_manager(self):
         """
         Segmente une image binaire en régions distinctes à l'aide de l'algorithme Watershed.
 
@@ -198,9 +199,9 @@ class ImageManager:
             segmentedImage (List[np.ndarray]): liste de matrices binaires, chaque matrice représentant une zone segmentée
         """
 
-        filteredImage = self.filteredImage
+        filtered_image = self.filtered_image
         # Inverser l'image car Watershed travaille avec fond=0, objets>0
-        inverted = np.uint8(1 - filteredImage)
+        inverted = np.uint8(1 - filtered_image)
 
         # Calcul de la distance transformée
         distance = cv2.distanceTransform(inverted, distanceType=cv2.DIST_L2, maskSize=3)
@@ -228,16 +229,16 @@ class ImageManager:
         # Appliquer l’algorithme Watershed
         markers = cv2.watershed(image_color, markers)
 
-        self.segmentedImage = []
+        self.segmented_image = []
         # Générer une image binaire pour chaque label > 1
         nbMin = (self.width * self.height) * 0.03
         # 3% of the total size of the image
         for label in range(2, markers.max() + 1):
             region = np.where(markers == label, 1, 0).astype(np.uint8)
             if np.count_nonzero(region) > 1:
-                self.segmentedImage.append(region)
+                self.segmented_image.append(region)
 
-    def objectAnalyser(self):
+    def object_analyser(self):
         """
         Identifie la forme principale dans self.filteredImage : carré, cercle ou forme inconnue.
 
@@ -251,34 +252,48 @@ class ImageManager:
             if color != Color.NONE:
 
                 self.binarizer(color)
-                self.medianFilter()
-                self.segmentationManager()
+                self.median_filter()
+                self.segmentation_manager()
 
-                for binaryImage in self.segmentedImage :
+                for binary_image in self.segmented_image :
 
+
+                    ####### Orientation of the object
                     # +1 => object a the right
                     # -1 => object a the left
-
-                    cx = self.centroidGetter(binaryImage)
+                    cx, cy = self.centroid_getter(binary_image)
                     if cx is None:
-                        position = 0
+                        position = None
                     elif cx < self.width / 2:
                         position = +1
                     else:
                         position = -1
 
-                    if binaryImage is None or binaryImage.ndim != 2:
+                    # relation entre angle et pixel
+
+                    # Trois points (x, y)
+                    x = [0, self.width/2, self.width]
+                    y = [33, 0, -33]
+
+                    # Ajustement polynômial de degré 2
+                    coeffs = np.polyfit(x, y, deg=2)
+
+                    # Création du polynôme à partir des coefficients
+                    polynome = np.poly1d(coeffs)
+
+                    if binary_image is None or binary_image.ndim != 2:
                         raise ValueError("filteredImage doit être une image binaire 2D.")
 
                     # Trouver les contours
-                    contours, _ = cv2.findContours(binaryImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    contours, _ = cv2.findContours(binary_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
                     if not contours:
                         self.objects.append(
                             {
                                 "color": color,
-                                "ObjectNature": ObjectNature.CUBE,
-                                "position": position
+                                "nature": Nature.NONE,
+                                "position": position,
+                                "angle" : polynome(cx)
                             }
                         )
                     else :
@@ -294,38 +309,42 @@ class ImageManager:
                             self.objects.append(
                                 {
                                     "color" : color,
-                                    "ObjectNature" : ObjectNature.CUBE,
-                                    "position" : position
+                                    "nature" : Nature.CUBE,
+                                    "position" : position,
+                                    "angle": polynome(cx)
                                 }
                             )
                         elif len(approx) >= 7:
                             self.objects.append(
                                 {
                                     "color": color,
-                                    "ObjectNature": ObjectNature.BALL,
-                                    "position": position
+                                    "nature": Nature.BALL,
+                                    "position": position,
+                                    "angle": polynome(cx)
                                 }
                             )
                         else:
                             self.objects.append(
                                 {
                                     "color": color,
-                                    "ObjectNature": ObjectNature.NONE,
-                                    "position": position
+                                    "nature": Nature.NONE,
+                                    "position": position,
+                                    "angle": polynome(cx)
                                 }
                             )
 
     @staticmethod
-    def centroidGetter(binary_image):
+    def centroid_getter(binary_image):
         moments = cv2.moments(binary_image)
         if moments["m00"] != 0:
             cx = int(moments["m10"] / moments["m00"])
-            return cx
+            cy = int(moments["m01"] / moments["m00"])  # Calcul de cy
+            return cx, cy
         else:
-            return None
+            return None, None
 
     @staticmethod
-    def proessKiller():
+    def process_killer():
         try:
             # Récupérer les PIDs des processus qui utilisent /dev/video0
             result = subprocess.check_output(
