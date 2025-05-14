@@ -2,7 +2,6 @@ import os
 import subprocess
 import numpy as np
 import cv2
-import math
 
 from Color import *
 from Nature import *
@@ -34,6 +33,10 @@ class ImageManager:
         """
             This method start the imageTreatment
         """
+
+        # leave resources
+        self.process_killer()
+
         # take image
         self.photographer()
 
@@ -150,14 +153,14 @@ class ImageManager:
 
         # Définir les intervalles HSV pour chaque couleur
         if color == Color.BLUE:
-            lower = np.array([90, 100, 50])
-            upper = np.array([150, 255, 255])
+            lower = np.array([90, 50, 20])  # Hue plus bas, saturation et valeur plus faibles
+            upper = np.array([135, 255, 255])  # Hue un peu plus large vers les bleus profonds
         elif color == Color.YELLOW:
-            lower = np.array([15, 100, 100])
-            upper = np.array([45, 255, 255])
+            lower = np.array([22, 150, 100])
+            upper = np.array([32, 255, 255])
         elif color == Color.ORANGE:
-            lower = np.array([5, 100, 100])
-            upper = np.array([25, 255, 255])
+            lower = np.array([10, 150, 100])
+            upper = np.array([20, 255, 255])
         else:
             raise ValueError("Couleur non supportée")
 
@@ -193,7 +196,7 @@ class ImageManager:
         Segmente une image binaire en régions distinctes à l'aide de l'algorithme Watershed.
 
         Parameters:
-            binaryImage (np.ndarray): image binaire 2D (fond = 1, objets = 0)
+            binary_image (np.ndarray): image binaire 2D (fond = 1, objets = 0)
 
         Returns: NONE
             segmentedImage (List[np.ndarray]): liste de matrices binaires, chaque matrice représentant une zone segmentée
@@ -256,8 +259,6 @@ class ImageManager:
                 self.segmentation_manager()
 
                 for binary_image in self.segmented_image :
-
-
                     ####### Orientation of the object
                     # +1 => object a the right
                     # -1 => object a the left
